@@ -1,0 +1,653 @@
+% Copyright 2017 by Christian Senger <senger@inue.uni-stuttgart.de>
+% Copyright 2021 by Marcel Breyer <marcel.breyer@ipvs.uni-stuttgart.de>
+%
+% This file may be distributed and/or modified
+%
+% 1. under the LaTeX Project Public License and/or
+% 2. under the GNU Public License.
+
+
+\usepackage{xkeyval}
+
+\define@boolkeys{theme}[theme@]{totalframenumber, sectionslide, sectiontoc}[true]
+\presetkeys{theme}{totalframenumber=false, sectionslide=false, sectiontoc=false}{}
+\define@cmdkey{theme}[theme@]{titleimage}{}
+
+\ProcessOptionsX<theme>
+
+
+%% reset footnote counter per page, adapt footnotes
+\usepackage{perpage}
+\MakePerPage{footnote}
+\renewcommand*{\thefootnote}{\fnsymbol{footnote}}
+\renewcommand\footnoterule{}
+
+%% set up fonts
+\usepackage{lmodern}
+\usepackage{iftex}
+
+\ifLuaTeX
+	%% use Uni Stuttgart font with LuaTex
+	\usepackage{fontspec}
+	\setsansfont[
+	BoldFont = UniversforUniS65Bd-Regular,
+	ItalicFont = UniversforUniS45LtObl-Rg,
+	BoldItalicFont = UniversforUniS45LtObl-Rg,
+	Scale = MatchUppercase
+	]{UniversforUniS55Rm-Regular}
+	\renewcommand{\familydefault}{\sfdefault}
+\else
+	%% use normal fonts
+	\usepackage[T1]{fontenc}
+	\usepackage{inputenc}
+\fi
+
+\usepackage{csquotes}
+
+
+%% necessary packages for the styles
+\usepackage{appendixnumberbeamer}
+\usepackage{etoolbox}  %% interal logic
+\usepackage{phonenumbers}  %% correctly typeset phone numbers
+\setphonenumbers{foreign}
+\usepackage{qrcode}  %% create QR codes
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage{xifthen}  %% interal logic
+\usepackage{fontawesome5}  %% icons for final slide
+\usepackage{tabularx}  %% fixed width table for last slide
+\usepackage{makecell}  %% newlines in table cells
+
+%% fix some latex quirks
+\usepackage{xspace}
+\usepackage[xspace]{ellipsis}
+\usepackage{fixmath}
+\usepackage[stretch=10]{microtype}
+
+
+%% expandable lowercase function
+\usepackage{expl3}
+\ExplSyntaxOn
+\cs_set_eq:NN \explowercase \text_lowercase:n
+\ExplSyntaxOff
+
+
+%% use fancy enumerate/itemize and restore beamer layout
+% \usepackage{enumitem}\setitemize{%
+%   label=\usebeamerfont*{itemize item}
+%   \usebeamercolor[fg]{itemize item}
+%   \usebeamertemplate{itemize item}
+% }
+
+
+\mode<presentation>
+
+\useoutertheme{uniS}
+\useinnertheme{rectangles}
+
+\usecolortheme{uniS}
+
+\usefonttheme[onlymath]{serif}
+\setbeamerfont{block title}{size=\small}
+
+\setbeamersize{text margin left=1cm}
+\setbeamersize{text margin right=1cm}
+
+\setbeamertemplate{navigation symbols}{}
+
+
+
+%% define constants used in multiple places
+\pgfdeclareimage[height=1cm]{unilogo}{.logos/unilogo\iflanguage{ngerman}{}{_en}.pdf}
+\pgfdeclareimage[height=1cm]{unilogo_w}{.logos/unilogo_w\iflanguage{ngerman}{}{_en}.pdf}
+\def\universitylink{https://www.uni-stuttgart.de/\iflanguage{ngerman}{}{en/}}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% title page %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\makeatletter
+\def\beamerrightmargin{\dimexpr\Gm@rmargin\relax}
+
+%% get cc license version
+\define@choicekey*{cclic}{version}[\val]{4.0, 3.0, 2.5, 2.0, 1.0}{\edef\cclic@version{\val}}
+%% get cclicense currency
+\define@choicekey*{cclic}{currency}[\val]{eur, usd}{\edef\cclic@currency{\val}}
+
+\newcommand{\cclicense}[2][]{
+	%% process options
+	\setkeys{cclic}{version=4.0, currency=EUR, #1}
+
+	%% get license type
+	\edef\cclic@type{\explowercase{#2}}
+
+	%% get license url
+	\edef\cclic@lang{\iflanguage{ngerman}{german}{\languagename}}
+	\ifthenelse{\equal{\cclic@type}{cc-zero}}{
+		\xdef\@cclic@url{https://creativecommons.org/publicdomain/zero/1.0/deed.\cclic@lang}
+	}{
+		\xdef\@cclic@url{https://creativecommons.org/licenses/\cclic@type/\cclic@version/deed.\cclic@lang}
+	}
+
+	%% get license file
+	\xdef\@cclic@image{.license/\cclic@type.\cclic@currency.png}
+	\IfFileExists{\@cclic@image}{}{\PackageError{CC License}{Illegal Creative Commons License Type '#2'!}{Valid Creative Commons License Types are 'by', 'by-nc', 'by-nc-nd', 'by-nc-sa', 'by-nd', 'by-sa' and 'cc-zero'.}}
+}
+
+
+\define@key{institute}{logo}{\xdef\@institute@logo{#1}}
+\define@key{institute}{url}{\xdef\@institute@url{#1}}
+\renewcommand{\institute}[3][]{
+	%% process options
+	\setkeys{institute}{#1}
+
+	%% generate institute URL based on short institute name
+	\ifdef{\@institute@url}{}{
+		\edef\institute@short@lowercase{\explowercase{#3}}
+		\gdef\@institute@url{https://www.\institute@short@lowercase.uni-stuttgart.de/}
+	}
+
+	%% define short and long name for institute
+	\gdef\@institute@long{#2}
+	\gdef\@institute@short{#3}
+}
+
+\define@key{department}{logo}{\xdef\@department@logo{#1}}
+\define@key{department}{url}{\xdef\@department@url{#1}}
+\newcommand{\department}[3][]{
+	%% process options
+	\setkeys{department}{#1}
+
+	%% generate institute URL based on short institute and department name
+	\ifdef{\@department@url}{}{
+		\edef\institute@short@lowercase{\explowercase{\@institute@short}}
+		\edef\department@short@lowercase{\explowercase{#3}}
+		\gdef\@department@url{https://www.\institute@short@lowercase.uni-stuttgart.de/departments/\department@short@lowercase/}
+	}
+
+	%% define short and long name for department
+	\gdef\@department@long{#2}
+	\gdef\@department@short{#3}
+}
+
+
+
+\newlength{\circlesize}
+\setbeamertemplate{title page}
+{
+	%% chech if the required values "title" and "author" are set
+	\ifdefempty{\inserttitle}{\PackageError{Title}{Missing title!}{}}{}
+	\setbox0=\hbox{\insertauthor\unskip}\ifdim\wd0=0pt
+		\PackageError{Author}{Missing author!}{}
+	\fi
+
+
+	%% the title page shouldn't count for the slide counter
+	\addtocounter{framenumber}{-1}
+ 	\setlength{\circlesize}{1.12\textheight}
+ 	\begin{tikzpicture}[overlay, remember picture]
+    	\clip (current page.north west) rectangle (current page.south east);
+
+		%% background image
+    	\ifdef{\theme@titleimage}{
+			\node[anchor=north west] at ([xshift=-1em, yshift=1ex] current page.north west){\includegraphics[width=\textwidth+1em+2\beamerrightmargin]{\theme@titleimage}};
+
+			\node[%
+			  rectangle,
+			  draw=white,
+			  fill=white,
+			  anchor=north west,
+			  minimum width=2\textwidth,
+			  minimum height=3cm]
+			at (current page.north west) {};
+		}{
+			\shade[%
+			  top color=uniSlightblue,
+			  bottom color=uniSblue,
+			  shading angle=-45]
+			(current page.north west) rectangle (current page.south east);
+		}
+
+		%% uni logo
+		\node[anchor=north west] (logo) at ([xshift=0.4cm, yshift=-1cm] current page.north west) {\href{\universitylink}{\pgfuseimage{\ifdef{\theme@titleimage}{unilogo}{unilogo_w}}}};
+
+        %% institute logo
+        \ifdef{\@institute@logo}{\node[anchor=west] (logoinstitute) at ([xshift=0.1cm, yshift=0cm] logo.east) {\ifdef{\@institute@url}{\href{\@institute@url}{\includegraphics[height=1cm]{\@institute@logo}}}{\includegraphics[height=1cm]{\@institute@logo}}};}{}
+
+        %% departement logo
+        \ifdef{\@department@logo}{\node[anchor=west] (logodepartment) at ([xshift=0.1cm, yshift=0cm] logoinstitute.east) {\ifdef{\@department@url}{\href{\@department@url}{\includegraphics[height=1cm]{\@department@logo}}}{\includegraphics[height=1cm]{\@department@logo}}};}{}
+
+		%% title
+		\node[%
+		  circle,
+		  fill=uniSgray,
+		  text=white,
+		  anchor=south east,
+		  minimum size=\circlesize,
+		  align=left,
+		  font=\bfseries\Huge]
+		(title) at ([yshift=-.05\circlesize] current page.south east) {\inserttitle};
+
+		\setlength{\circlesize}{.2\textheight}
+
+		%% author
+		\node[%
+		  circle,
+		  fill=white,
+		  anchor=center,
+		  minimum size=\circlesize,
+		  align=center,
+		  font=\bfseries\small]
+		(author) at ([xshift=0.4\circlesize, yshift=.4\circlesize] title.north west) {\insertauthor};
+
+		\ifdef{\@cclic@image}{
+			\node[inner sep=0pt, outer sep=0pt, anchor=south west] at (current page.south west) {\href{\@cclic@url}{\includegraphics[width=1.75cm]{\@cclic@image}}};
+		}{}
+	\end{tikzpicture}
+}
+\makeatother
+
+\newcommand{\titleslide}{
+	\begin{frame}[plain]
+		\maketitle
+	\end{frame}
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% table of contents slide %%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\makeatletter
+%% set frame title if requested
+\define@cmdkey{toc}{title}{}
+
+\newcommand{\tocslide}[1][]{
+	%% process options, set default frame title
+	\setkeys{toc}{title=\iflanguage{ngerman}{Übersicht}{Overview}, #1}
+
+	\begin{frame}{\cmdKV@toc@title}
+		\tableofcontents
+	\end{frame}
+}
+\makeatother
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% final slide %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\makeatletter
+
+
+%% define speaker image
+\newcommand{\speakerimage}[1]{\gdef\@speakerimage{#1}}
+
+%% if the option 'labeltxt' is present, set its value accordingly (or to default values based on current language)
+\define@cmdkey{email}{labeltxt}[\iflanguage{ngerman}{E-Mail}{email}]{}
+%% if the option 'labeltxt' isn't present, set an icon
+\presetkeys{email}{labeltxt=\faIcon[regular]{envelope}}{}
+\newcommand{\email}[2][]{
+	%% process options
+	\setkeys{email}{#1}
+
+	\xdef\@email@icon{\cmdKV@email@labeltxt}
+	\gdef\@email{\href{mailto:#2}{#2}}
+}
+
+%% if the option 'labeltxt' is present, set its value accordingly (or to default values based on current language)
+\define@cmdkey{phone}{labeltxt}[\iflanguage{ngerman}{Telefon}{phone}]{}
+%% if the option 'labeltxt' isn't present, set an icon
+\presetkeys{phone}{labeltxt=\faIcon{phone}}{}
+\newcommand{\phone}[2][]{
+	%% process options
+	\setkeys{phone}{#1}
+
+	\xdef\@phone@icon{\cmdKV@phone@labeltxt}
+	\gdef\@phone{\phonenumber[country=DE]{#2}}
+}
+
+% %% if the option 'labeltxt' is present, set its value accordingly (or to default values based on current language)
+% \define@cmdkey{fax}{labeltxt}[\iflanguage{ngerman}{Fax}{fax}]{}
+% %% if the option 'labeltxt' isn't present, set an icon
+% \presetkeys{fax}{labeltxt=\faIcon{fax}}{}
+% \newcommand{\fax}[2][]{
+% 	%% process options
+% 	\setkeys{fax}{#1}
+
+% 	\xdef\@fax@icon{\cmdKV@fax@labeltxt}
+% 	\gdef\@fax{\phonenumber[country=DE]{#2}}
+% }
+
+%% if the option 'labeltxt' is present, set its value accordingly (or to default values based on current language)
+\define@cmdkey{address}{labeltxt}[\iflanguage{ngerman}{Adresse}{address}]{}
+%% if the option 'labeltxt' isn't present, set an icon
+\presetkeys{address}{labeltxt=\faIcon{map-marker-alt}}{}
+\newcommand{\address}[4][]{
+	%% process options
+	\setkeys{address}{#1}
+
+	\xdef\@address@icon{\cmdKV@address@labeltxt}
+	\gdef\@street{#2}
+	\gdef\@zip{#3}
+	\gdef\@address{\href{http://maps.google.com/?q=#2+#3}{\makecell[tl]{#2\\#3\\\iflanguage{ngerman}{Raum}{Room}: #4}}}
+}
+
+%% if the option 'labeltxt' is present, set its value accordingly (or to default values based on current language)
+\define@cmdkey{officehours}{labeltxt}[\iflanguage{ngerman}{Sprechstunden}{office hours}]{}
+%% if the option 'labeltxt' isn't present, set an icon
+\presetkeys{officehours}{labeltxt=\faIcon[regular]{calendar-check}}{}
+\newcommand{\officehours}[2][]{
+	%% process options
+	\setkeys{officehours}{#1}
+
+	\xdef\@officehours@icon{\cmdKV@officehours@labeltxt}
+	\gdef\@officehours{#2}
+}
+
+%% if the option 'labeltxt' is present, set its value accordingly (or to default values based on current language)
+\define@cmdkey{website}{labeltxt}[\iflanguage{ngerman}{Website}{website}]{}
+%% if the option 'labeltxt' isn't present, set an icon
+\presetkeys{website}{labeltxt=\faIcon{link}}{}
+\newcommand{\website}[2][]{
+	%% process options
+	\setkeys{website}{#1}
+
+	\xdef\@website@icon{\cmdKV@website@labeltxt}
+	\gdef\@website{\url{#2}}
+	%% create QR code to website
+	\gdef\@websiteqr{\textcolor{white}{\qrcode[height=1.25cm]{#2}}}
+}
+
+%% switch between full and compact type when displaying the ORCID iD
+\define@choicekey*{appendix}{mode}[\val]{beamer, handout}{\xdef\beamer@currentmode{\val}}
+\define@choicekey{orcid}{type}[\val\nr]{full, compact}{\edef\orchid@type{\val}}
+\newcommand{\orcid}[2][]{
+	%% https://info.orcid.org/brand-guidelines/
+	%% "We do not currently allow references to authorized ORCID iDs without using the iD icon."
+	\setkeys{orcid}{type=full, #1}
+
+	%% include ORCID iD icon as pdf
+	\gdef\@orcid@icon{\raisebox{-1.25pt}{\includegraphics[width=9pt]{.logos/ORCIDiD.pdf}}}
+	\ifthenelse{\equal{\orchid@type}{full}}{
+		\gdef\@orcid{\href{https://orcid.org/#2}{\url{https://orcid.org/#2}}}
+	}{
+		\gdef\@orcid{\href{https://orcid.org/#2}{#2}}
+	}
+
+}
+
+\newcommand{\addoptionalinfo}[2]{
+	\ifdef{#2}{
+		#1 & #2 \\
+	}{}
+}
+
+\newcommand{\finalslide}{
+	%% chech if the required values "title" and "author" are set
+	\ifdef{\@email}{}{\PackageError{final slide}{No email specified!}{}}
+
+	%% the final page shouldn't count for the slide counter
+	\addtocounter{framenumber}{-1}
+
+	\begin{frame}[plain]
+		\begin{tikzpicture}[overlay, remember picture]
+			\clip (current page.north west) rectangle (current page.south east);
+
+			%% background
+			\shade[%
+			  top color=uniSlightblue,
+			  bottom color=uniSblue,
+			  shading angle=-45]
+			(current page.north west) rectangle (current page.south east);
+
+			\node[anchor=north west] at ([xshift=1cm, yshift=-1cm] current page.north west) {\href{\universitylink}{\pgfuseimage{unilogo_w}}};
+
+        	%% add department logo
+       		\node[circle, minimum size=1cm, path picture={\node at (path picture bounding box.center) {\ifdef{\@department@logo}{\href{\@department@url}{\includegraphics[width=1cm]{\@department@logo}}}{}};}] (department_logo) at ([xshift=-1.5cm, yshift=-1.6cm] current page.north east) {};
+
+        	%% add institute logo
+        	\ifdef{\@institute@logo}{
+        		\node[left of=department_logo, node distance=2cm, circle, minimum size=1cm, path picture={\node at (path picture bounding box.center) {\href{\@institute@url}{\includegraphics[width=1cm]{\@institute@logo}}};}] {};
+        	}{}
+
+        	%% add website QR code to bottom left corner if present
+			\ifdef{\@websiteqr}{
+				\node[anchor=south west] at (current page.south west) {\@websiteqr};
+			}{}
+		\end{tikzpicture}
+
+    	\vspace{2cm}
+
+		\begin{columns}[T]
+			%% add speaker image to left column if provided
+			\begin{column}{2.5cm}
+				\begin{minipage}[c][0.75\textheight][c]{\columnwidth}
+	    			\ifdef{\@speakerimage}{
+		    			\begin{tikzpicture}
+							\node[circle, minimum size=2.5cm, path picture={
+							\node at (path picture bounding box.center) {\includegraphics[width=2.5cm]{\@speakerimage}};}] {};
+						\end{tikzpicture}
+					}{}
+				\end{minipage}
+			\end{column}
+			%% fill right column with all provided information
+			\begin{column}{.75\textwidth}
+				\begin{minipage}[c][0.75\textheight][c]{\columnwidth}
+
+					\begin{beamercolorbox}
+						{palette tertiary}
+
+						%% add author, institute and department
+						{
+							%% remove newlines from \author
+							\def\\{\relax\ifhmode\unskip\fi\space\ignorespaces}
+							\insertauthor
+						} \\
+						\ifdef{\@institute@long}{\href{\@institute@url}{\@institute@long} \\}{}
+						\ifdef{\@department@long}{\textit{\href{\@department@url}{\@department@long}} \\}{}
+
+						\vspace*{0.5ex}
+
+	      	  			{
+	      	  				%% add additional (mostly optional) information
+							\def\arraystretch{1.2}
+							\footnotesize
+							\begin{tabularx}{\columnwidth}{r X}
+								\@email@icon & \@email \\
+								\addoptionalinfo{\@phone@icon}{\@phone}
+								\addoptionalinfo{\@fax@icon}{\@fax}
+								\addoptionalinfo{\@address@icon}{\@address}
+								\addoptionalinfo{\@officehours@icon}{\@officehours}
+								\addoptionalinfo{\@website@icon}{\@website}
+								\addoptionalinfo{\@orcid@icon}{\@orcid}
+							\end{tabularx}
+						}
+					\end{beamercolorbox}
+				\end{minipage}
+			\end{column}
+		\end{columns}
+
+		%% start appendix
+		\appendix
+	\end{frame}
+}
+\makeatother
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% appenddix slide %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\makeatletter
+%% add section slide (without number) and the given title if requested
+\define@key{appendix}{section}{\gdef\@inappendix{}\section{#1}}
+%% change to the given mode (beamer vs. handout) if requested
+\define@choicekey*{appendix}{mode}[\val]{beamer, handout}{\xdef\beamer@currentmode{\val}}
+
+\newcommand{\appendixslides}[2][]{
+	%% process options
+	\setkeys{appendix}{#1}
+
+	%% actual appendix slides
+	\input{#2}
+}
+\makeatother
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%% bibliography slide %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\makeatletter
+%% set frame title if requested
+\define@cmdkey{bib}{title}{}
+%% cite all entries in bibliography file if requested
+\define@choicekey*{bib}{cite}[\val\nr]{all, cited}{\ifnum\nr=0\nocite{*}\fi}
+%% change to the given frame style to plain if requested
+\define@choicekey*{bib}{style}[\val\nr]{plain, footer}{\ifnum\nr=0\def\bib@style{plain}\fi}
+
+\newcommand{\bibliographyslide}[1][]{
+	%% process options, set default frame title
+	\setkeys{bib}{title=\iflanguage{ngerman}{Quellen}{References}, #1}
+	%% define style if not provided by user
+	\ifdef{\bib@style}{}{\def\bib@style{}}
+
+	\begin{frame}[allowframebreaks, \bib@style]{\cmdKV@bib@title}
+		\renewcommand*{\bibfont}{\small}
+		\printbibliography
+	\end{frame}
+}
+\setbeamertemplate{frametitle continuation}{}
+\makeatother
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% section page %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\makeatletter
+\AtBeginSection[]{
+	%% display section page if reuested
+	\iftheme@sectionslide
+		\begin{frame}[plain]
+			\sectionpage
+		\end{frame}
+	\fi
+	%% display toc after every section page if reuested
+	\iftheme@sectiontoc
+		\begin{frame}[c, plain]
+			\tableofcontents[currentsection]
+		\end{frame}
+	\fi
+}
+
+\setbeamertemplate{section page}
+{
+	%% sectin page(s) shouldn't count for the slide counter
+	%% decrement once for each inserted slide
+	\iftheme@sectionslide
+		\addtocounter{framenumber}{-1}
+	\fi
+	\iftheme@sectiontoc
+		\addtocounter{framenumber}{-1}
+	\fi
+	\begin{tikzpicture}[overlay, remember picture]
+		\setlength{\circlesize}{.9\textheight}
+		\clip (current page.north west) rectangle (current page.south east);
+
+    	%% background
+		\shade[%
+		  top color=uniSlightblue,
+		  bottom color=uniSblue,
+		  shading angle=-45]
+		(current page.north west) rectangle (current page.south east);
+
+		%% section
+		\node[%
+		  circle,
+		  fill=white,
+		  anchor=north west,
+		  minimum size=\circlesize,
+		  text width=.5\circlesize,
+		  align=left,
+		  font=\bfseries\Huge]
+		(sectiontitle) at ([xshift=.1\circlesize, yshift=-.2\circlesize]current page.north west) {\insertsection};
+
+		\setlength{\circlesize}{.2\textheight}
+
+		%% do not display section number in appendix section
+		\ifdef{\@inappendix}{}{
+			%% section number
+			\node[%
+			  circle,
+			  fill=uniSgray,
+			  text=white,
+			  anchor=center,
+			  minimum size=\circlesize,
+			  align=left,
+			  font=\bfseries\Huge]
+			at ([xshift=-.1\circlesize, yshift=-.3\circlesize] sectiontitle.south east) {\thesection};
+		}
+	\end{tikzpicture}
+}
+\makeatother
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% miscellaneous %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setbeamertemplate{section in toc}{
+	%% change style for table of contents (including enumeration marks)
+	\usebeamercolor[bg]{item projected}
+	\begin{tikzpicture}[node distance=.5em]
+		\node[anchor=base, baseline, fill=uniSgray, text=white, circle, inner sep=0pt, minimum size=2em] (no) {\inserttocsectionnumber};
+		\node[right=of no] {\color{uniSblue} \inserttocsection};
+	\end{tikzpicture}
+}
+
+\setbeamertemplate{frametitle}{
+	%% change style for all frame titles
+	\nointerlineskip
+	\begin{beamercolorbox}[leftskip=2ex, ht=2em,wd=\paperwidth]{frametitle}
+		\bfseries\Large\insertframetitle\strut
+	\end{beamercolorbox}
+}
+
+\setbeamertemplate{itemize/enumerate body begin}{\footnotesize}
+\setbeamertemplate{itemize/enumerate subbody begin}{\footnotesize}
+
+\setbeamercolor{item projected}{bg=uniSlightblue, fg=uniSblue}
+\setbeamertemplate{enumerate items}[circle]
+
+\setbeamertemplate{itemize item}{
+	\usebeamercolor[bg]{item projected}
+	\begin{tikzpicture}
+		\draw[uniSlightblue,fill=uniSlightblue, opacity=0] (0,0) circle (.1695em);
+		\draw[uniSlightblue,fill=uniSlightblue] (.1695em, .1695em) circle (.1695em);
+	\end{tikzpicture}
+}
+\setbeamertemplate{itemize subitem}{
+	\usebeamercolor[bg]{item projected}
+	\begin{tikzpicture}
+		\draw[uniSblue,fill=uniSblue, opacity=0] (0,0) circle (.1695em);
+		\draw[uniSblue,fill=uniSblue] (.1695em, .1695em) circle (.1695em);
+	\end{tikzpicture}
+}
+
+\setbeamertemplate{bibliography item}{\insertbiblabel}
+
+\setbeamertemplate{blocks}[rounded][shadow=true]
+
+\defbeamertemplate{note page}{notepageuniS}{
+	%% change style for speaker note pages
+	\insertvrule{0.45\paperheight}{uniSgray!20}
+	\vskip-0.45\paperheight
+	\insertslideintonotes{0.45}
+
+	\noindent\hspace{1em}\begin{minipage}{.9\paperwidth}
+		\footnotesize
+		\setlist{noitemsep}
+		\insertnote
+	\end{minipage}
+}
+
+\setbeamertemplate{note page}[notepageuniS]
+
+\mode<all>
