@@ -186,6 +186,8 @@ sudo apt install g++ cmake cmake-curses-gui
 sudo apt install openjdk-18-jdk openjdk-18-jre maven
         \end{minted}
     \end{itemize}
+    \vfill
+    In your code, \textbf{only} the respective standard libraries (everything in \texttt{std} in \texttt{C++}, except C standard header and their \texttt{C++} counterparts (e.g., \mintinline{c++}{<string>} is allowed, \mintinline{c++}{<cstring>} or \mintinline{c++}{<string.h>} is \textbf{not} allowed), and everything in \texttt{java.*} in \texttt{Java}) may be used!
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -238,31 +240,6 @@ sudo apt install openjdk-18-jdk openjdk-18-jre maven
     \item Each file must include the names of \textbf{all} contributors.
     \item Submission must be compilable and executable from the command line under Linux, i.e., \textbf{no} IDE-specific build scripts!
   \end{itemize}
-\end{frame}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{frame}[fragile]
-  \frametitle{Phase 1.1: Naive implementation of an n-body simulation}
-    Each particle $i$ with mass $m_i$ and position vector $\vec{r}_i$ experiences the force $\vec{a}_i$ from all other particles according to Newton's law of universal gravitation:
-      \begin{equation*}
-        \vec{a}_i = \sum\limits_{i \neq j} G m_j \frac{\vec{r}_j - \vec{r}_i}{(\norm{\vec{r}_j - \vec{r}_i}_2^2 + \epsilon^2)^\frac{3}{2}}
-      \end{equation*}
-      \pause
-      \begin{itemize}
-        \item Gravitational constant: $G = \num{6.67430e-11}\frac{\text{m}^3}{\text{kg} \cdot \text{s}^2}$
-        \item Units do not match the given datasets:
-              \begin{itemize}
-                \item Mass in solar masses: $M_\odot = \SI{1.988435e30}{\kilo\gram}$
-                \item Distance in parsecs:  $\SI{1}{\parsec} = \SI{3.08567758129e16}{\meter}$
-                \item Time in years: $\SI{1}{\year} = \num{365.25} \cdot \SI{86400}{\second}$
-              \end{itemize}
-        \item Note: the correct scaling of $G$ should be calculated in the program!
-        \item Softening factor: $\epsilon = 0.1$ to avoid collisions between particles
-        \item $\norm{}_2^2$: squared Euclidean distance
-      \end{itemize}
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1049,6 +1026,8 @@ time java -jar simulate.jar --file data.csv --dt 10 --t_end 100 --vs 2
         \end{minted}
     }%
     \vspace*{-1.75em}
+    \item If only an IPv6 address is available on the bwCloud, use \texttt{mvn -Djava.net.preferIPv6Addresses=true package} to build your Java programs. 
+    \item In the Barnes-Hut algorithm, pay attention that the large black hole isn't located at the intersection point of all eight quadrants. 
     \item MIT insider tip: \link{https://missing.csail.mit.edu/}{\enquote{The Missing Semester of Your CS Education}}
     \end{itemize}
 \end{frame}
@@ -1060,9 +1039,9 @@ time java -jar simulate.jar --file data.csv --dt 10 --t_end 100 --vs 2
   \frametitle{Important Dates}
   \begin{description}
     \item[\dateKickoffPhaseOne] Kick-off
-    \item[\dateDeadlinePhaseTwo] Group formation deadline
+    \item[\dateDeadlinePhaseZero] Group formation deadline
     \item[\dateKickoffPhaseTwo] Kick-off Phase 2
-    \item[\dateDeadlinePhaseTwo] Phase 1 deadline
+    \item[\dateDeadlinePhaseOne] Phase 1 deadline
     \item[\dateDeadlinePhaseTwo] Phase 2 deadline
     \item[\dateFinal] Final presentations% (possibly multiple dates)
   \end{description}
