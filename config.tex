@@ -1,0 +1,86 @@
+
+\usepackage[utf8]{inputenc}
+\usepackage[american]{babel}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{caption}
+\usepackage{lmodern}
+\usepackage{xcolor}
+\usepackage{xspace}
+\usepackage{xkeyval}
+
+% remove hyperref warning
+\usepackage{hyperref}
+\pdfstringdefDisableCommands{%
+  \def\\{}%
+  \def\texttt#1{<#1>}%
+}
+
+% per default use inline TODOs and remove warning
+\usepackage{todonotes}
+\presetkeys{todonotes}{inline}{}
+\setlength {\marginparwidth }{2cm}
+
+% add new (non-SI) units
+\usepackage[binary-units]{siunitx}
+\DeclareSIUnit{\parsec}{pc}
+\DeclareSIUnit{\year}{yr}
+
+% use special tikz libraries and overwrite the default arrow head
+\usepackage{tikz}
+\usetikzlibrary{
+   shadings,
+   shadows,
+   positioning,
+   arrows.meta,
+   decorations.pathreplacing,
+}
+\tikzset{
+    >={Latex[length=2mm, width=1.25mm]},
+}
+
+% overwrite default minted background
+\usepackage{minted}
+\setminted{
+    bgcolor=lightgray!30
+}
+
+% add new math commands
+\usepackage{mathtools}
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}
+\makeatletter
+\let\oldabs\abs
+\def\abs{\@ifstar{\oldabs}{\oldabs*}}
+%
+\let\oldnorm\norm
+\def\norm{\@ifstar{\oldnorm}{\oldnorm*}}
+\makeatother
+
+% add algorithm environment without the need for a caption
+\usepackage{algorithm,algpseudocode}
+\newenvironment{algorithmcl}
+ {\par\addvspace{\topsep}
+  \centering
+  \begin{minipage}{\linewidth}
+  \hrule\kern2pt}
+ {\par\kern2pt\hrule
+  \end{minipage}
+  \par\addvspace{\topsep}}
+
+% add better arrow
+\usepackage{fontawesome5}
+\newcommand{\DisplayRightArrow}{\faIcon{arrow-right}\xspace}
+
+
+% add before <-> after image environment
+\newcommand{\BeforeAfterImage}[2][0.4]{\raisebox{%
+  .5\dimexpr-\height+\ht\strutbox-\dp\strutbox}{%
+  \includegraphics[width=#1\textwidth]{#2}}}
+
+% set fontsize to a specific pt value
+\newcommand{\setfontsize}[1]{\fontsize{#1pt}{1.2\dimexpr#1pt\relax}\selectfont}
+
+\usepackage{csquotes}
+
+\newcommand{\link}[2]{\href{#1}{#2\,\textsuperscript{\color{gray}\tiny\faIcon{external-link-alt}}}}

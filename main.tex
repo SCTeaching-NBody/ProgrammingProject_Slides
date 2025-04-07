@@ -1,0 +1,41 @@
+% !TeX program = pdflatex
+
+\documentclass[aspectratio=169,table,x11names,dvipsnames]{beamer}
+
+\usetheme{default}
+\setbeamertemplate{navigation symbols}{}
+
+\input{config.tex}
+\input{constants.tex}
+
+\usetheme[
+	totalframenumber,
+	% sectionslide,
+%	sectiontoc,
+	titleimage=figures/final_state_synthetic_galaxies_cropped.png,
+]{uniS}
+
+\cclicense{by-nc-sa}
+
+\institute[logo=.logos/ipvslogo_rund_blau_dunkel.pdf, url=https://www.ipvs.uni-stuttgart.de/]{Institute for Parallel and Distributed Systems}{IPVS}
+
+\department[logo=.logos/logo_scientific_comp.pdf, url=https://www.ipvs.uni-stuttgart.de/departments/sc/]{Scientific Computing}{SC}
+
+
+\title{Programming\\ Project\\ Galaxy-Crash}
+%\author[Van Craen, Breyer, Prof. Pflüger]{Alexander Van Craen,\\Marcel Breyer,\\Prof. Dr. Dirk Pflüger}
+\author[Bantel, Strack, Prof. Pflüger]{Linus Bantel,\\Alexander Strack,\\Prof. Dr. Dirk Pflüger}
+\date{\semester}
+
+
+
+\begin{document}
+
+
+  \titleslide
+
+  \input{content/slides.tex}
+
+
+
+\end{document}
